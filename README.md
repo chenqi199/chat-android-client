@@ -27,4 +27,5 @@ Android 7.0
 
 
 #### 修改
- protobuf+netty
+1. protobuf+netty 通讯
+2. handler 传递数据给mianThread
