@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+
+    tools:context=".ChatUiActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="45dp"
+        android:background="@drawable/bottom_border"
+        android:layout_alignParentTop="true"
+        android:orientation="horizontal">
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="match_parent"
+            android:src="@drawable/leftarow"
+            android:layout_marginStart="5dp"
+            tools:ignore="ContentDescription" />
+        <TextView
+            android:layout_width="100dp"
+            android:layout_height="match_parent"
+            android:text="ShyBoy"
+            android:textSize="16sp"
+            android:textAllCaps="false"
+            android:textColor="@color/black"
+            android:gravity="left"
+            android:layout_margin="10dp"
+            android:maxLines="1"
+            />
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/open"
+            android:layout_gravity="center"
+            android:layout_marginStart="180dp"
+            android:contentDescription="TODO" />
+    </LinearLayout>
+
+    <ScrollView
+        android:id="@+id/scrollContent"
+        android:layout_marginTop="45dp"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:fadeScrollbars="true"
+        android:fillViewport="true"
+        android:layout_marginBottom="50dp"
+        android:background="#EDEDED"
+        >
+        <!-- 中间内容视图代码 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+            <ListView
+                android:id="@android:id/list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_centerVertical="true"
+                android:divider="@android:color/transparent"
+                android:scrollbars="none" />
+<!--            android:dividerHeight="15dp"-->
+        </LinearLayout>
+
+    </ScrollView>
+    <LinearLayout
+        android:id="@+id/send_usr"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#F7F7F7"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        >
+
+        <ImageButton
+            android:id="@+id/btn_voice"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="@drawable/voice"
+            android:layout_marginBottom="12dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginRight="5dp"
+            android:layout_marginLeft="5dp"
+            android:layout_gravity="center_vertical"
+            />
+        <LinearLayout
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="10dp"
+            android:focusable="true"
+            android:focusableInTouchMode="true">
+            <EditText
+                android:layout_width="230dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/edit_send"
+                android:layout_weight="6"
+                android:lineSpacingMultiplier="1.2"
+                android:lineSpacingExtra="20dp"
+                android:hint="发送消息"
+                android:minHeight="30dp"
+                android:background="@drawable/edit_background"
+                android:layout_gravity="center_vertical"
+                android:textColor="@android:color/black"
+                android:textSize="16sp"
+
+                android:textColorHint="#AAAAAA" />
+        </LinearLayout>
+<!--        android:textCursorDrawable="#0ABF60"-->
+
+        <ImageButton
+            android:id="@+id/btn_emoticons"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginBottom="12dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginLeft="5dp"
+            android:background="@drawable/emoji"
+            android:layout_gravity="center_vertical"
+            />
+
+        <ImageButton
+            android:id="@+id/btn_more"
+            android:layout_width="22dp"
+            android:layout_height="24dp"
+            android:background="@drawable/more"
+            android:layout_gravity="center_vertical"
+            android:layout_marginBottom="12dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginRight="5dp"
+            android:layout_marginLeft="5dp"
+            android:visibility="gone"
+            />
+
+        <Button
+            android:id="@+id/btn_send"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_weight="2"
+            android:text="发送"
+            android:textSize="16sp"
+            android:background="@drawable/button_send"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="3dp"
+            android:layout_marginTop="3dp"
+            android:layout_marginRight="3dp"
+            android:layout_marginLeft="5dp"
+            android:layout_gravity="center_vertical" />
+    </LinearLayout>
+</RelativeLayout>
