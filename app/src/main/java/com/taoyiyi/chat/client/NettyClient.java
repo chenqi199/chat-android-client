@@ -135,9 +135,10 @@ public class NettyClient {
                     if (future.isSuccess()) {
                         Log.i("  netty_connect", "connect: success");
                         ChannelPipeline pipeline = channel.pipeline();
-                        ChannelHandlerContext ctx = pipeline.firstContext();
+                        ChannelHandlerContext ctx = pipeline.lastContext();
                         this.channel = ctx;
                         this.sendThread.startRun();
+
                         ChatClient.get().regChannel(TestLocalMsgConstant.fromUser);
                     } else {
                         future.channel().eventLoop().schedule(NettyClient.this::connectServer, 3L, TimeUnit.SECONDS);

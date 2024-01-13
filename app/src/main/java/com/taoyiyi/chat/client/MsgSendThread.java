@@ -74,7 +74,7 @@ public class MsgSendThread {
     }
 
     public boolean sendMsgSync(TransportMessageOuterClass.EnumMsgType msgType, Message content, boolean idReset) {
-//        Log.i("sendMsgSync",content.toString());
+        Log.i("sendMsgSync",content.toString());
         if (this.client.isConnect()) {
             if (idReset) {
                 this.msgId = 0L;
