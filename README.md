@@ -24,3 +24,8 @@ Android 7.0
 
 1.  Aiden
 2.  Moxing
+
+
+#### 修改
+1. protobuf+netty 通讯
+2. handler 传递数据给mianThread
