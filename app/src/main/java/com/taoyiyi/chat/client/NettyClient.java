@@ -82,21 +82,27 @@ public class NettyClient {
     private void initBootstrap() {
         this.workerGroup = new NioEventLoopGroup();
         this.mB = new Bootstrap();
-        this.mB.group(this.workerGroup).channel(NioSocketChannel.class).option(ChannelOption.SO_KEEPALIVE, Boolean.TRUE).option(ChannelOption.TCP_NODELAY, Boolean.TRUE).option(ChannelOption.SO_SNDBUF, 32 * 1024)  // 设置发送缓冲大小
-                .option(ChannelOption.SO_RCVBUF, 32 * 1024)       // 这是接收缓冲大小
-                .handler(new ChannelInitializer<SocketChannel>() {
-                    protected void initChannel(SocketChannel ch) {
-                        ch.pipeline().addLast(new CustomProtobufDecoder()).addLast(new CustomProtobufEncoder()).addLast(new NettyClientHandler());
-                    }
-                }).option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Integer.valueOf(10000));
+        this.mB.group(this.workerGroup);
+        this.mB.channel(NioSocketChannel.class);
+        this.mB.option(ChannelOption.SO_KEEPALIVE, Boolean.TRUE);
+        this.mB.option(ChannelOption.TCP_NODELAY, Boolean.TRUE);
+        this.mB.option(ChannelOption.SO_SNDBUF, 32 * 1024);
+        this.mB.option(ChannelOption.SO_RCVBUF, 32 * 1024);
+        this.mB.handler(new ChannelInitializer<SocketChannel>() {
+            protected void initChannel(SocketChannel ch) {
+                ch.pipeline().addLast(new CustomProtobufDecoder()).addLast(new CustomProtobufEncoder()).addLast(new NettyClientHandler());
+            }
+        });
+        this.mB.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Integer.valueOf(10000));// 设置发送缓冲大小
+// 这是接收缓冲大小
     }
 
     public void connect() {
-        (new Thread() {
+        new Thread() {
             public void run() {
                 NettyClient.this.connectServer();
             }
-        }).start();
+        }.start();
     }
 
     public void connectServer() {
@@ -116,7 +122,6 @@ public class NettyClient {
     }
 
     public void connect(int port, String host) throws Exception {
-        Log.i("connect", "connect: start_port_host");
         synchronized (this) {
             if (this.channel != null && !this.channel.isRemoved()) {
                 return;
@@ -169,7 +174,7 @@ public class NettyClient {
 
     public int sendMsg(Object request) {
 
-        Log.i("sendMsg request: {}", request.toString());
+        Log.i("sendMsg request: ", request.toString());
         if (this.channel != null) {
             this.channel.writeAndFlush(request);
             return 1;
@@ -179,7 +184,7 @@ public class NettyClient {
 
     public class NettyClientHandler<T> extends ChannelHandlerAdapter {
         public void channelActive(ChannelHandlerContext ctx) {
-            Log.i("channelActive", "channelActive");
+            Log.i("channelActive channelId", ctx.channel().id().asShortText());
             synchronized (NettyClient.client) {
                 if (NettyClient.this.channel == null) {
                     NettyClient.this.channel = ctx;
@@ -200,12 +205,11 @@ public class NettyClient {
                             public void run() {
                                 NettyClient.this.connectServer();
                             }
-                        }, 5L, TimeUnit.SECONDS);
+                        }, RECONNECT_TIME, TimeUnit.SECONDS);
                     }
                     NettyClient.this.isConnecting = false;
                 }
             }
-
         }
 
         public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {

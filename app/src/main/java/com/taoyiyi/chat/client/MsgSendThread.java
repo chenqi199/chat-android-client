@@ -10,11 +10,13 @@ import com.taoyiyi.chat.proto.TransportMessageOuterClass;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 
 public class MsgSendThread {
 
-    private final List<ProtobufMsg> sendMsgList;
+    private final BlockingQueue<ProtobufMsg> sendMsgList;
     private NettyClient client;
     private long msgId;
     private String accessToken;
@@ -26,10 +28,8 @@ public class MsgSendThread {
         this.client = client;
         this.msgId = 0L;
         this.accessToken = null;
-        this.sendMsgList = new ArrayList<>();
+        this.sendMsgList = new LinkedBlockingQueue<>();
     }
-
-    public static final String URL_PREFIX = "TYY";
 
     public void setAccessToken(String accessToken) {
         this.accessToken = accessToken;
@@ -41,23 +41,6 @@ public class MsgSendThread {
         }
     }
 
-    public long addMsgToSendList(TransportMessageOuterClass.EnumMsgType msgType, Message content) {
-        return addMsgToSendList(msgType, content, false);
-    }
-
-    public long addMsgToSendList(TransportMessageOuterClass.EnumMsgType msgType, Message content, boolean insert) {
-
-        ProtobufMsg msg = new ProtobufMsg(msgType, content, this.msgId++);
-        synchronized (this.mLocked) {
-            if (insert) {
-                this.sendMsgList.add(0, msg);
-            } else {
-                this.sendMsgList.add(msg);
-            }
-            this.mLocked.notify();
-        }
-        return this.msgId - 1L;
-    }
 
     public boolean sendMsgSync(TransportMessageOuterClass.EnumMsgType msgType, Message content) {
 
@@ -74,7 +57,7 @@ public class MsgSendThread {
     }
 
     public boolean sendMsgSync(TransportMessageOuterClass.EnumMsgType msgType, Message content, boolean idReset) {
-        Log.i("sendMsgSync",content.toString());
+
         if (this.client.isConnect()) {
             if (idReset) {
                 this.msgId = 0L;
@@ -87,6 +70,25 @@ public class MsgSendThread {
             return (ret > 0);
         }
         return false;
+    }
+
+
+    public long addMsgToSendList(TransportMessageOuterClass.EnumMsgType msgType, Message content) {
+        return addMsgToSendList(msgType, content, false);
+    }
+
+
+    // 批量标记场景
+    public long addMsgToSendList(TransportMessageOuterClass.EnumMsgType msgType, Message content, boolean insert) {
+
+
+        ProtobufMsg msg = new ProtobufMsg(msgType, content, insert ? ++msgId : msgId);
+        try {
+            sendMsgList.put(msg);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return msgId;
     }
 
     public boolean isAccredit() {
@@ -109,7 +111,7 @@ public class MsgSendThread {
             this.sender = new SendTread();
             this.sender.start();
         } else {
-            Log.e("tttt", "Sender alread run");
+            Log.e("startRun", "Sender is runing");
         }
     }
 
@@ -129,8 +131,18 @@ public class MsgSendThread {
 
             MsgSendThread.this.isRunning = true;
 
-//            ChatClient.get().regChannel("U18ce81029b4XslwF8B5f");// u1 注册一个连接通道
-
+            while (!isInterrupted()) {
+                try {
+                    ProtobufMsg message = sendMsgList.take();
+                    // 发送消息的逻辑代码
+                    Log.i("Sending message batch: ", message.toString());
+                    client.sendMsg(message);
+                } catch (InterruptedException e) {
+                    Log.e("sendThreadErr", e.getMessage());
+                    // 处理线程中断
+                    interrupt();
+                }
+            }
         }
     }
 }
