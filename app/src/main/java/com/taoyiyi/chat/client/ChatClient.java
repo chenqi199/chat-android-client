@@ -48,6 +48,7 @@ public class ChatClient {
     private ChatClient() {
         this.socketClient = NettyClient.getClient();
         this.msgSender = this.socketClient.getMsgSender();
+        this.checkConnect();
         startWxHeart();
     }
 

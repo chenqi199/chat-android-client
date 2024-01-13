@@ -126,9 +126,9 @@ public class MsgSendThread {
 
     class SendTread extends Thread {
         public void run() {
-            System.out.println("Sender start run");
+
             MsgSendThread.this.isRunning = true;
-            ChatClient.get().regChannel(TestLocalMsgConstant.fromUser);// u2 注册一个连接通道
+
 //            ChatClient.get().regChannel("U18ce81029b4XslwF8B5f");// u1 注册一个连接通道
 
         }

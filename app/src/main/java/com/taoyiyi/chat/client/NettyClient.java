@@ -3,6 +3,7 @@ package com.taoyiyi.chat.client;
 
 import android.util.Log;
 
+import com.example.newbrain.TestLocalMsgConstant;
 import com.google.protobuf.Any;
 import com.taoyiyi.chat.proto.TransportMessageOuterClass;
 
@@ -19,6 +20,7 @@ import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -37,7 +39,7 @@ public class NettyClient {
     private MsgSendThread sendThread;
     private volatile Bootstrap mB;
     private volatile boolean isClosed;
-    private volatile boolean isConneting;
+    private volatile boolean isConnecting;
     private volatile EventLoopGroup workerGroup;
 
     public static NettyClient getClient() {
@@ -55,7 +57,7 @@ public class NettyClient {
         this.sendThread = new MsgSendThread(this);
         long l = System.currentTimeMillis();
         initBootstrap();
-        Log.i("initBootstrap", "NettyClient: "+(System.currentTimeMillis()-l));
+        Log.i("initBootstrap", "NettyClient: " + (System.currentTimeMillis() - l));
     }
 
     public MsgSendThread getMsgSender() {
@@ -80,16 +82,11 @@ public class NettyClient {
     private void initBootstrap() {
         this.workerGroup = new NioEventLoopGroup();
         this.mB = new Bootstrap();
-        this.mB.group(this.workerGroup).channel(NioSocketChannel.class)
-                .option(ChannelOption.SO_KEEPALIVE, Boolean.TRUE)
-                .option(ChannelOption.TCP_NODELAY, Boolean.TRUE)
-                .option(ChannelOption.SO_SNDBUF, 32 * 1024)  // 设置发送缓冲大小
+        this.mB.group(this.workerGroup).channel(NioSocketChannel.class).option(ChannelOption.SO_KEEPALIVE, Boolean.TRUE).option(ChannelOption.TCP_NODELAY, Boolean.TRUE).option(ChannelOption.SO_SNDBUF, 32 * 1024)  // 设置发送缓冲大小
                 .option(ChannelOption.SO_RCVBUF, 32 * 1024)       // 这是接收缓冲大小
                 .handler(new ChannelInitializer<SocketChannel>() {
-                    protected void initChannel(SocketChannel ch) throws Exception {
-                        ch.pipeline()
-                                .addLast(new CustomProtobufDecoder()).addLast(new CustomProtobufEncoder())
-                                .addLast(new NettyClientHandler());
+                    protected void initChannel(SocketChannel ch) {
+                        ch.pipeline().addLast(new CustomProtobufDecoder()).addLast(new CustomProtobufEncoder()).addLast(new NettyClientHandler());
                     }
                 }).option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Integer.valueOf(10000));
     }
@@ -119,39 +116,40 @@ public class NettyClient {
     }
 
     public void connect(int port, String host) throws Exception {
+        Log.i("connect", "connect: start_port_host");
         synchronized (this) {
             if (this.channel != null && !this.channel.isRemoved()) {
                 return;
             }
         }
-        if (this.isConneting) {
+        if (this.isConnecting) {
             return;
         }
-        this.isConneting = true;
+        this.isConnecting = true;
         this.isClosed = false;
         try {
             ChannelFuture f = this.mB.connect(host, port).sync();
             f.addListener((ChannelFutureListener) future -> {
                 if (future.isDone()) {
-                    NettyClient.this.isConneting = false;
+                    NettyClient.this.isConnecting = false;
                     if (future.isSuccess()) {
-                        System.out.println("success");
+                        Log.i("  netty_connect", "connect: success");
+                        ChannelPipeline pipeline = channel.pipeline();
+                        ChannelHandlerContext ctx = pipeline.firstContext();
+                        this.channel = ctx;
+                        this.sendThread.startRun();
+                        ChatClient.get().regChannel(TestLocalMsgConstant.fromUser);
                     } else {
-                        future.channel().eventLoop().schedule(new Runnable() {
-                            public void run() {
-                                NettyClient.this.connectServer();
-                            }
-                        }, 5L, TimeUnit.SECONDS);
+                        future.channel().eventLoop().schedule(NettyClient.this::connectServer, 3L, TimeUnit.SECONDS);
                     }
                 }
             });
             f.channel().closeFuture().sync();
         } catch (Exception e) {
-            System.out.println(e.toString());
+            Log.d("netty_connect_err", e.toString());
             TimeUnit.SECONDS.sleep(5L);
-            this.isConneting = false;
+            this.isConnecting = false;
             connect();
-        } finally {
         }
     }
 
@@ -180,32 +178,30 @@ public class NettyClient {
 
     public class NettyClientHandler<T> extends ChannelHandlerAdapter {
         public void channelActive(ChannelHandlerContext ctx) {
-            Log.i("channelActive","channelActive");
+            Log.i("channelActive", "channelActive");
             synchronized (NettyClient.client) {
                 if (NettyClient.this.channel == null) {
                     NettyClient.this.channel = ctx;
                     NettyClient.this.sendThread.startRun();
                 }
-                NettyClient.this.isConneting = false;
+                NettyClient.this.isConnecting = true;
             }
 
         }
 
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-            boolean reConn = false;
-            synchronized (NettyClient.client) {
+            synchronized (this) {
                 if (ctx.equals(NettyClient.this.channel)) {
                     NettyClient.this.channel = null;
                     NettyClient.this.sendThread.stopRun();
                     if (!NettyClient.this.isClosed) {
-                        reConn = true;
                         ctx.channel().eventLoop().schedule(new Runnable() {
                             public void run() {
                                 NettyClient.this.connectServer();
                             }
                         }, 5L, TimeUnit.SECONDS);
                     }
-                    NettyClient.this.isConneting = false;
+                    NettyClient.this.isConnecting = false;
                 }
             }
 
