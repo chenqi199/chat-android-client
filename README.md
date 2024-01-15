@@ -29,3 +29,10 @@ Android 7.0
 #### 修改
 1. protobuf+netty 通讯
 2. handler 传递数据给mianThread
+ ### [服务端地址](https://github.com/chenqi199/chat-backend)
+
+![输入图片说明](img/chat_20240115115146.png)
+![输入图片说明](img/df_20240115115334.png)
+![输入图片说明](img/tt_20240115115251.png)
+不同设备启动需要切换注册用户用户
+![输入图片说明](img/tt_20240115115356.png)
