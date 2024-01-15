@@ -139,7 +139,7 @@ public class NettyClient {
                     NettyClient.this.isConnecting = false;
                     if (future.isSuccess()) {
                         Log.i("  netty_connect", "connect: success");
-                        ChannelPipeline pipeline = channel.pipeline();
+                        ChannelPipeline pipeline = future.channel().pipeline();
                         ChannelHandlerContext ctx = pipeline.lastContext();
                         this.channel = ctx;
                         this.sendThread.startRun();
